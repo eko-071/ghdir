@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import time
 from typing import Self
 from urllib.parse import quote
@@ -9,9 +10,25 @@ from urllib.parse import quote
 import httpx
 
 from ghdir.downloader import MAX_RETRIES, RETRY_STATUS
-from ghdir.errors import GhdirError, PrivateRepoError, RepoNotFoundError
+from ghdir.errors import GhdirError, PrivateRepoError, RateLimitError, RepoNotFoundError
 
 BASE = "https://api.github.com"
+
+
+def _rate_limited(resp: httpx.Response) -> bool:
+    return resp.headers.get("X-RateLimit-Remaining") == "0"
+
+
+def _rate_limit_message(resp: httpx.Response) -> str:
+    reset = resp.headers.get("X-RateLimit-Reset")
+    when = (
+        datetime.datetime.fromtimestamp(int(reset), tz=datetime.UTC)
+        .astimezone()
+        .strftime("%H:%M")
+        if reset
+        else "later"
+    )
+    return f"GitHub API rate limit exceeded; resets at {when}"
 
 
 class GitHubClient:
@@ -45,6 +62,8 @@ class GitHubClient:
         if resp.status_code == 404:
             return None
         if resp.status_code == 403:
+            if _rate_limited(resp):
+                raise RateLimitError(_rate_limit_message(resp))
             raise PrivateRepoError(f"access denied to {owner}/{repo} (private repo or rate limit)")
         if resp.status_code != 200:
             raise GhdirError(f"GitHub API error {resp.status_code} for branch {name!r}")
@@ -89,6 +108,8 @@ class GitHubClient:
         if resp.status_code == 404:
             raise RepoNotFoundError(f"{what} not found")
         if resp.status_code == 403:
+            if _rate_limited(resp):
+                raise RateLimitError(_rate_limit_message(resp))
             raise PrivateRepoError(f"access denied to {what} (private repo or rate limit)")
         if resp.status_code != 200:
             raise GhdirError(f"GitHub API error {resp.status_code} for {what}")

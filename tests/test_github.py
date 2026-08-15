@@ -1,8 +1,10 @@
+import datetime
+
 import httpx
 import pytest
 from conftest import make_transport
 
-from ghdir.errors import PrivateRepoError, RepoNotFoundError
+from ghdir.errors import PrivateRepoError, RateLimitError, RepoNotFoundError
 from ghdir.github import GitHubClient
 
 
@@ -46,6 +48,30 @@ def test_repo_403_raises_private():
         PrivateRepoError
     ):
         c.repo("secret", "repo")
+
+
+def test_repo_403_rate_limited_raises_rate_limit_error():
+    reset = 1700000000
+    headers = {"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": str(reset)}
+    with GitHubClient(
+        transport=httpx.MockTransport(lambda r: httpx.Response(403, json={}, headers=headers))
+    ) as c, pytest.raises(RateLimitError) as exc:
+        c.repo("octo", "hello")
+    expected = (
+        datetime.datetime.fromtimestamp(reset, tz=datetime.UTC)
+        .astimezone()
+        .strftime("%H:%M")
+    )
+    assert f"resets at {expected}" in str(exc.value)
+
+
+def test_branch_403_rate_limited_raises_rate_limit_error():
+    headers = {"X-RateLimit-Remaining": "0"}
+    with GitHubClient(
+        transport=httpx.MockTransport(lambda r: httpx.Response(403, json={}, headers=headers))
+    ) as c, pytest.raises(RateLimitError) as exc:
+        c.branch("octo", "hello", "main")
+    assert "rate limit" in str(exc.value)
 
 
 def test_branch_lookup_existing(tree):

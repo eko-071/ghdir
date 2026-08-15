@@ -85,10 +85,6 @@ Found 132 files (1482974 bytes) in main/Embodied
 Downloaded 132 files (1482974 bytes) to Embodied
 ```
 
-If something's wrong like a bad URL, missing folder, private repo, or a branch that
-doesn't exist, you'll get one clear error line and a non-zero exit code,
-not a stack trace.
-
 ## Developing
 
 ```sh
