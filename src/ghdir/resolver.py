@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from ghdir.errors import BranchNotFoundError, PathNotFoundError
 from ghdir.github import GitHubClient
 from ghdir.models import FileEntry, RepoRef, ResolvedRepo
@@ -85,5 +87,13 @@ def _find_dir(
 
 
 def _raw_url(owner: str, repo: str, branch: str, path: str, rel: str) -> str:
-    root = f"{RAW_BASE}/{owner}/{repo}/{branch}"
-    return f"{root}/{path}/{rel}" if path else f"{root}/{rel}"
+    """Build a raw.githubusercontent.com URL, percent-encoding each path segment.
+
+    Branch keeps its slashes literal (safe="/") since raw refs are matched
+    across segments; everything else is encoded so characters like `#` and
+    spaces in filenames survive httpx URL parsing.
+    """
+    root = f"{RAW_BASE}/{quote(owner)}/{quote(repo)}/{quote(branch, safe='/')}"
+    full = f"{path}/{rel}" if path else rel
+    encoded = "/".join(quote(segment, safe="") for segment in full.split("/"))
+    return f"{root}/{encoded}"

@@ -4,7 +4,7 @@ import pytest
 from ghdir.errors import BranchNotFoundError, PathNotFoundError, RepoNotFoundError
 from ghdir.github import GitHubClient
 from ghdir.models import RepoRef
-from ghdir.resolver import resolve
+from ghdir.resolver import _raw_url, resolve
 
 
 def test_resolve_repo_root(client):
@@ -82,3 +82,24 @@ def test_total_bytes_and_default_output_dir(client):
     assert resolved.total_bytes == 125
     assert resolved.default_output_dir == "src"
     assert resolve(client, RepoRef("octo", "hello")).default_output_dir == "hello"
+
+
+def test_raw_url_encodes_fragment_in_filename():
+    url = _raw_url("octo", "hello", "main", "docs", "notes#draft.md")
+    assert "notes%23draft.md" in url
+    assert "#" not in url
+
+
+def test_raw_url_encodes_space_in_filename():
+    assert "%20" in _raw_url("octo", "hello", "main", "", "a b.txt")
+
+
+def test_raw_url_keeps_branch_slashes_literal():
+    assert _raw_url("octo", "hello", "feature/x", "", "nested.py") == (
+        "https://raw.githubusercontent.com/octo/hello/feature/x/nested.py"
+    )
+
+
+def test_raw_url_encodes_special_chars_in_branch():
+    url = _raw_url("octo", "hello", "notes#draft", "", "a.txt")
+    assert "notes%23draft" in url
