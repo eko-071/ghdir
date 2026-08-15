@@ -54,6 +54,9 @@ A few flags if you need them:
 - `--branch NAME` — use a different branch than the one in the URL
 - `--dry-run` — see the file count and total size without downloading anything
 - `--workers N` — number of concurrent downloads (default: 8)
+- `--include GLOB` — only download files matching this glob (repeatable)
+- `--exclude GLOB` — skip files matching this glob (repeatable)
+- `--max-size SIZE` — skip files larger than `SIZE` (e.g. `50M`, `1.5G`)
 - `--version` — print the installed version and exit
 
 Some examples:
@@ -70,6 +73,9 @@ ghdir https://github.com/octo/hello/tree/main/src -o ./vendor/hello-src
 
 # just check what it would download
 ghdir https://github.com/octo/hello/tree/main/src --dry-run
+
+# only Python files, nothing over 50M
+ghdir https://github.com/octo/hello/tree/main/src --include "*.py" --max-size 50M
 ```
 
 Running it looks like this:

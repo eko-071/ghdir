@@ -55,6 +55,16 @@ def test_cli_dry_run_writes_nothing(tmp_path, mock_cli):
     assert not (tmp_path / "src").exists()
 
 
+def test_cli_dry_run_exclude(tmp_path, mock_cli):
+    result = runner.invoke(
+        app, ["https://github.com/octo/hello/tree/main", "--dry-run", "--exclude", "*.md"]
+    )
+    assert result.exit_code == 0, result.output
+    assert "Filtered out 2 files; 2 remain" in result.stdout
+    assert "Nothing to download" not in result.stdout
+    assert not (tmp_path / "hello").exists()
+
+
 def test_cli_branch_override(tmp_path, mock_cli):
     result = runner.invoke(
         app, ["https://github.com/octo/hello/tree/main", "--branch", "dev"]

@@ -11,6 +11,7 @@ from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColum
 from ghdir import __version__, filesystem
 from ghdir.downloader import download_all_async
 from ghdir.errors import GhdirError
+from ghdir.filters import apply_filters, parse_size
 from ghdir.github import GitHubClient
 from ghdir.parser import parse_github_url
 from ghdir.resolver import resolve
@@ -36,6 +37,15 @@ def main(
     branch: str = typer.Option(None, "--branch", help="Override the branch parsed from the URL."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Resolve and report, download nothing."),
     workers: int = typer.Option(8, "--workers", help="Number of concurrent downloads."),
+    include: list[str] = typer.Option(
+        [], "--include", help="Only download files matching this glob (repeatable)."
+    ),
+    exclude: list[str] = typer.Option(
+        [], "--exclude", help="Skip files matching this glob (repeatable)."
+    ),
+    max_size: str = typer.Option(
+        None, "--max-size", help="Skip files larger than this, e.g. '50M', '1.5G'."
+    ),
 ) -> None:
     """Download the directory at a GitHub tree URL, e.g. .../tree/main/Embodied."""
     try:
@@ -44,10 +54,19 @@ def main(
         with GitHubClient() as client:
             resolved = resolve(client, ref, branch_override=branch)
 
+            max_size_bytes = parse_size(max_size) if max_size else None
+            files = apply_filters(resolved.files, include, exclude, max_size_bytes)
+            total_bytes = sum(f.size for f in files)
+
             where = resolved.branch + (f"/{resolved.path}" if resolved.path else "")
             typer.echo(f"Found {len(resolved.files)} files ({resolved.total_bytes} bytes) in {where}")
-            if not resolved.files:
-                typer.echo("Nothing to download; directory is empty")
+
+            skipped = len(resolved.files) - len(files)
+            if skipped:
+                typer.echo(f"Filtered out {skipped} files; {len(files)} remain ({total_bytes} bytes)")
+
+            if not files:
+                typer.echo("Nothing to download after filtering")
                 return
             if dry_run:
                 return
@@ -56,13 +75,13 @@ def main(
             filesystem.ensure_output_dir(dest)
             with _progress() as progress:
                 task = progress.add_task(
-                    f"Downloading {len(resolved.files)} files", total=resolved.total_bytes
+                    f"Downloading {len(files)} files", total=total_bytes
                 )
 
                 async def _run() -> list[str]:
                     async with httpx.AsyncClient(timeout=30) as download_client:
                         return await download_all_async(
-                            resolved.files,
+                            files,
                             dest,
                             download_client,
                             workers=workers,
@@ -72,7 +91,7 @@ def main(
                         )
 
                 asyncio.run(_run())
-        typer.echo(f"Downloaded {len(resolved.files)} files ({resolved.total_bytes} bytes) to {dest}")
+        typer.echo(f"Downloaded {len(files)} files ({total_bytes} bytes) to {dest}")
     except GhdirError as e:
         typer.secho(f"error: {e}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1)
