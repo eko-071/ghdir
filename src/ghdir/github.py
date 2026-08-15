@@ -34,12 +34,9 @@ def _rate_limit_message(resp: httpx.Response) -> str:
 class GitHubClient:
     def __init__(
         self,
-        token: str | None = None,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         headers = {"Accept": "application/vnd.github+json"}
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
         self.http = httpx.Client(headers=headers, timeout=30, transport=transport)
 
     def __enter__(self) -> Self:
