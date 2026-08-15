@@ -6,7 +6,7 @@ import httpx
 import typer
 from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn
 
-from ghdir import filesystem
+from ghdir import __version__, filesystem
 from ghdir.downloader import download_all
 from ghdir.errors import GhdirError
 from ghdir.github import GitHubClient
@@ -16,9 +16,18 @@ from ghdir.resolver import resolve
 app = typer.Typer(add_completion=False, help="Download a subdirectory of a GitHub repository.")
 
 
+def _print_version(value: bool) -> None:
+    if value:
+        typer.echo(f"ghdir {__version__}")
+        raise typer.Exit()
+
+
 @app.command()
 def main(
     url: str,
+    version: bool = typer.Option(
+        False, "--version", is_eager=True, callback=_print_version, help="Show the version and exit."
+    ),
     output: str = typer.Option(
         None, "-o", "--output", help="Output directory (default: the target dir's name)."
     ),
