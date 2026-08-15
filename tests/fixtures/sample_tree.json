@@ -1,0 +1,27 @@
+{
+  "repo": "octo/hello",
+  "default_branch": "main",
+  "refs": ["main", "dev", "feature/x"],
+  "branches": {
+    "main": "abc123",
+    "dev": "def456",
+    "feature/x": "xyz789"
+  },
+  "trees": {
+    "abc123": [
+      {"path": "README.md", "mode": "100644", "type": "blob", "sha": "sha-readme", "size": 100},
+      {"path": "src", "mode": "040000", "type": "tree", "sha": "sha-src"},
+      {"path": "docs", "mode": "040000", "type": "tree", "sha": "sha-docs"}
+    ],
+    "sha-src": [
+      {"path": "main.py", "mode": "100644", "type": "blob", "sha": "sha-main", "size": 50},
+      {"path": "utils.py", "mode": "100644", "type": "blob", "sha": "sha-utils", "size": 75}
+    ],
+    "sha-docs": [
+      {"path": "guide.md", "mode": "100644", "type": "blob", "sha": "sha-guide", "size": 200}
+    ],
+    "xyz789": [
+      {"path": "nested.py", "mode": "100644", "type": "blob", "sha": "sha-nested", "size": 10}
+    ]
+  }
+}
