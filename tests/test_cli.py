@@ -58,6 +58,14 @@ def test_cli_branch_override(tmp_path, mock_cli):
     assert not (tmp_path / "hello" / "README.md").exists()
 
 
+def test_cli_branch_override_keeps_slashed_branch_path(tmp_path, mock_cli):
+    result = runner.invoke(
+        app, ["https://github.com/octo/hello/tree/feature/x/sub", "--branch", "dev"]
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "sub" / "data.txt").is_file()
+
+
 def test_cli_missing_path_error(tmp_path, mock_cli):
     result = runner.invoke(app, ["https://github.com/octo/hello/tree/main/nope"])
     assert result.exit_code == 1

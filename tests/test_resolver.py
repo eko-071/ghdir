@@ -42,6 +42,23 @@ def test_resolve_branch_with_slash_and_path(client):
         resolve(client, RepoRef("octo", "hello", ("feature", "x", "sub")))
 
 
+def test_branch_override_keeps_path_after_slashed_branch(client):
+    resolved = resolve(
+        client, RepoRef("octo", "hello", ("feature", "x", "sub")), branch_override="dev"
+    )
+    assert resolved.branch == "dev"
+    assert resolved.path == "sub"
+    assert {f.path for f in resolved.files} == {"data.txt"}
+    assert {f.download_url for f in resolved.files} == {
+        "https://raw.githubusercontent.com/octo/hello/dev/sub/data.txt"
+    }
+
+
+def test_branch_override_unknown_raises(client):
+    with pytest.raises(BranchNotFoundError):
+        resolve(client, RepoRef("octo", "hello", ("main",)), branch_override="nope")
+
+
 def test_missing_branch_raises(client):
     with pytest.raises(BranchNotFoundError):
         resolve(client, RepoRef("octo", "hello", ("nope",)))

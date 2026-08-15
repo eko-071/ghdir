@@ -20,10 +20,19 @@ def test_repo_403_raises_private():
         c.repo("secret", "repo")
 
 
-def test_branches_parsed(tree):
+def test_branch_lookup_existing(tree):
     with GitHubClient(transport=make_transport(tree)) as c:
-        branches = c.branches("octo", "hello")
-    assert branches == {"main": "abc123", "dev": "def456", "feature/x": "xyz789"}
+        assert c.branch("octo", "hello", "main") == "abc123"
+
+
+def test_branch_lookup_slashed_name(tree):
+    with GitHubClient(transport=make_transport(tree)) as c:
+        assert c.branch("octo", "hello", "feature/x") == "xyz789"
+
+
+def test_branch_lookup_missing_returns_none(tree):
+    with GitHubClient(transport=make_transport(tree)) as c:
+        assert c.branch("octo", "hello", "nope") is None
 
 
 def test_flatten_full_recursive(tree):

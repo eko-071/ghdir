@@ -9,10 +9,19 @@ from ghdir.models import FileEntry, RepoRef, ResolvedRepo
 RAW_BASE = "https://raw.githubusercontent.com"
 
 
-def resolve(client: GitHubClient, ref: RepoRef) -> ResolvedRepo:
+def resolve(
+    client: GitHubClient, ref: RepoRef, branch_override: str | None = None
+) -> ResolvedRepo:
     info = client.repo(ref.owner, ref.repo)
-    branches = client.branches(ref.owner, ref.repo)
-    branch, branch_sha, path = _pick_branch(ref.tail, branches, info["default_branch"])
+    branch, branch_sha, path = _pick_branch(
+        client, ref.owner, ref.repo, ref.tail, info["default_branch"]
+    )
+
+    if branch_override:
+        override_sha = client.branch(ref.owner, ref.repo, branch_override)
+        if override_sha is None:
+            raise BranchNotFoundError(f"branch {branch_override!r} not found")
+        branch, branch_sha = branch_override, override_sha
 
     if path:
         subtree = _find_dir(client, ref.owner, ref.repo, branch_sha, path)
@@ -36,18 +45,28 @@ def resolve(client: GitHubClient, ref: RepoRef) -> ResolvedRepo:
 
 
 def _pick_branch(
-    tail: tuple[str, ...], branches: dict[str, str], default_branch: str
+    client: GitHubClient,
+    owner: str,
+    repo: str,
+    tail: tuple[str, ...],
+    default_branch: str,
 ) -> tuple[str, str, str]:
-    """Branches can contain slashes; try the longest tail prefix that is a real branch.
+    """Try the longest tail prefix that is a real branch, via direct API lookup.
 
-    Returns (branch, sha, path) where path is the tail remaining after the branch.
+    Longest-prefix-first so `feature/x` is checked before `feature` when both
+    happen to exist. Returns (branch, sha, path) where path is the tail left
+    over after the branch.
     """
     if not tail:
-        return default_branch, branches.get(default_branch, default_branch), ""
+        sha = client.branch(owner, repo, default_branch)
+        if sha is None:
+            raise BranchNotFoundError(f"branch {default_branch!r} not found")
+        return default_branch, sha, ""
     for i in range(len(tail), 0, -1):
         candidate = "/".join(tail[:i])
-        if candidate in branches:
-            return candidate, branches[candidate], "/".join(tail[len(candidate.split("/")):])
+        sha = client.branch(owner, repo, candidate)
+        if sha is not None:
+            return candidate, sha, "/".join(tail[i:])
     raise BranchNotFoundError(f"branch {'/'.join(tail)!r} not found")
 
 

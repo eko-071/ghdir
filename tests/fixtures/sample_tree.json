@@ -24,7 +24,11 @@
       {"path": "nested.py", "mode": "100644", "type": "blob", "sha": "sha-nested", "size": 10}
     ],
     "def456": [
-      {"path": "dev_note.md", "mode": "100644", "type": "blob", "sha": "sha-dev-note", "size": 30}
+      {"path": "dev_note.md", "mode": "100644", "type": "blob", "sha": "sha-dev-note", "size": 30},
+      {"path": "sub", "mode": "040000", "type": "tree", "sha": "sha-sub"}
+    ],
+    "sha-sub": [
+      {"path": "data.txt", "mode": "100644", "type": "blob", "sha": "sha-data", "size": 40}
     ]
   }
 }

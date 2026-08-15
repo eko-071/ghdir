@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Self
+from urllib.parse import quote
 
 import httpx
 
@@ -31,12 +32,21 @@ class GitHubClient:
     def repo(self, owner: str, repo: str) -> dict:
         return self._get(f"/repos/{owner}/{repo}", f"repository {owner}/{repo}")
 
-    def branches(self, owner: str, repo: str) -> dict[str, str]:
-        data = self._get(
-            f"/repos/{owner}/{repo}/branches?per_page=100",
-            f"repository {owner}/{repo}",
-        )
-        return {b["name"]: b["commit"]["sha"] for b in data}
+    def branch(self, owner: str, repo: str, name: str) -> str | None:
+        """Return the branch's head commit SHA, or None if it doesn't exist.
+
+        Direct single lookup; works on repos with any number of branches and
+        with slash-containing branch names (percent-encoded as one path segment).
+        """
+        url = f"/repos/{owner}/{repo}/branches/{quote(name, safe='')}"
+        resp = self.http.get(BASE + url)
+        if resp.status_code == 404:
+            return None
+        if resp.status_code == 403:
+            raise PrivateRepoError(f"access denied to {owner}/{repo} (private repo or rate limit)")
+        if resp.status_code != 200:
+            raise GhdirError(f"GitHub API error {resp.status_code} for branch {name!r}")
+        return resp.json()["commit"]["sha"]
 
     def tree_entries(self, owner: str, repo: str, sha: str) -> list[dict]:
         data = self._get(

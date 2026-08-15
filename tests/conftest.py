@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import unquote
 
 import httpx
 import pytest
@@ -43,10 +44,13 @@ def make_transport(tree: dict) -> httpx.MockTransport:
             return httpx.Response(
                 200, json={"full_name": tree["repo"], "default_branch": default_branch}
             )
-        if path == f"/repos/{owner}/{repo}/branches":
-            return httpx.Response(
-                200, json=[{"name": b, "commit": {"sha": branches[b]}} for b in tree["refs"]]
-            )
+        branches_prefix = f"/repos/{owner}/{repo}/branches/"
+        if path.startswith(branches_prefix):
+            name = unquote(path[len(branches_prefix):])
+            sha = branches.get(name)
+            if sha is None:
+                return httpx.Response(404, json={"message": "Branch not found"})
+            return httpx.Response(200, json={"name": name, "commit": {"sha": sha}})
         prefix = f"/repos/{owner}/{repo}/git/trees/"
         if path.startswith(prefix):
             sha = path[len(prefix):].split("?")[0]

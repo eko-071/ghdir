@@ -10,7 +10,6 @@ from ghdir import filesystem
 from ghdir.downloader import download_all
 from ghdir.errors import GhdirError
 from ghdir.github import GitHubClient
-from ghdir.models import RepoRef
 from ghdir.parser import parse_github_url
 from ghdir.resolver import resolve
 
@@ -29,11 +28,9 @@ def main(
     """Download the directory at a GitHub tree URL, e.g. .../tree/main/Embodied."""
     try:
         ref = parse_github_url(url)
-        if branch:
-            ref = RepoRef(ref.owner, ref.repo, (branch,) + ref.tail[1:])
 
         with GitHubClient() as client:
-            resolved = resolve(client, ref)
+            resolved = resolve(client, ref, branch_override=branch)
 
             where = resolved.branch + (f"/{resolved.path}" if resolved.path else "")
             typer.echo(f"Found {len(resolved.files)} files ({resolved.total_bytes} bytes) in {where}")
