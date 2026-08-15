@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from conftest import make_transport
 from typer.testing import CliRunner
@@ -25,6 +26,11 @@ class _FakeClient:
 def mock_cli(monkeypatch, tree, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr("ghdir.cli.GitHubClient", lambda: _FakeClient(make_transport(tree)))
+    real_async_client = httpx.AsyncClient
+    transport = make_transport(tree)
+    monkeypatch.setattr(
+        "ghdir.cli.httpx.AsyncClient", lambda **kw: real_async_client(**kw, transport=transport)
+    )
     return tree
 
 

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import httpx
 import typer
 from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn
 
 from ghdir import __version__, filesystem
-from ghdir.downloader import download_all
+from ghdir.downloader import download_all_async
 from ghdir.errors import GhdirError
 from ghdir.github import GitHubClient
 from ghdir.parser import parse_github_url
@@ -33,6 +35,7 @@ def main(
     ),
     branch: str = typer.Option(None, "--branch", help="Override the branch parsed from the URL."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Resolve and report, download nothing."),
+    workers: int = typer.Option(8, "--workers", help="Number of concurrent downloads."),
 ) -> None:
     """Download the directory at a GitHub tree URL, e.g. .../tree/main/Embodied."""
     try:
@@ -55,12 +58,20 @@ def main(
                 task = progress.add_task(
                     f"Downloading {len(resolved.files)} files", total=resolved.total_bytes
                 )
-                download_all(
-                    resolved.files,
-                    dest,
-                    client.http,
-                    report=lambda done_files, done_bytes: progress.update(task, completed=done_bytes),
-                )
+
+                async def _run() -> list[str]:
+                    async with httpx.AsyncClient(timeout=30) as download_client:
+                        return await download_all_async(
+                            resolved.files,
+                            dest,
+                            download_client,
+                            workers=workers,
+                            report=lambda done_files, done_bytes: progress.update(
+                                task, completed=done_bytes
+                            ),
+                        )
+
+                asyncio.run(_run())
         typer.echo(f"Downloaded {len(resolved.files)} files ({resolved.total_bytes} bytes) to {dest}")
     except GhdirError as e:
         typer.secho(f"error: {e}", fg=typer.colors.RED, err=True)
