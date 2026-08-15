@@ -3,14 +3,14 @@
 Download a single folder from a GitHub repo, without cloning the whole thing.
 
 Point it at a GitHub tree URL and it grabs just that folder, keeping the
-directory structure intact. You should probably use `git clone` if you're downloading an entire repo, but this tools works for that as well.
+directory structure intact. You should probably use `git clone` if you're downloading an entire repo, but this tool works for that as well.
 
 ## Install
 
 Not on PyPI yet, so clone the repo and install from your local checkout:
  
 ```sh
-git clone https://github.com/<you>/ghdir.git
+git clone https://github.com/eko-071/ghdir.git
 cd ghdir
 uv tool install .
 ```
@@ -53,6 +53,7 @@ A few flags if you need them:
 - `-o, --output DIR` — where to put the files (default: the folder's own name)
 - `--branch NAME` — use a different branch than the one in the URL
 - `--dry-run` — see the file count and total size without downloading anything
+- `--workers N` — number of concurrent downloads (default: 8)
 - `--version` — print the installed version and exit
 
 Some examples:
