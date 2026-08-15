@@ -55,14 +55,3 @@ async def download_all_async(
 
     await asyncio.gather(*(run(entry) for entry in files))
     return written
-
-
-def download_all(
-    files: list[FileEntry] | tuple[FileEntry, ...],
-    dest_root: str,
-    client: httpx.AsyncClient,
-    workers: int = 8,
-    report: Report | None = None,
-) -> list[str]:
-    """Sync entry point for the CLI."""
-    return asyncio.run(download_all_async(files, dest_root, client, workers, report))

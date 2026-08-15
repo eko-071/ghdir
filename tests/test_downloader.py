@@ -3,7 +3,7 @@ import asyncio
 import httpx
 import pytest
 
-from ghdir.downloader import download_all
+from ghdir.downloader import download_all_async
 from ghdir.models import FileEntry
 
 
@@ -23,7 +23,7 @@ def _async_client(handler) -> httpx.AsyncClient:
 def test_download_all_writes_files(tmp_path):
     client = _async_client(lambda r: httpx.Response(200, content=b"content " + r.url.path.encode()))
     try:
-        written = download_all(_files(), str(tmp_path), client)
+        written = asyncio.run(download_all_async(_files(), str(tmp_path), client))
     finally:
         asyncio.run(client.aclose())
     assert (tmp_path / "a.txt").read_bytes() == b"content /octo/hello/main/a.txt"
@@ -35,7 +35,7 @@ def test_download_failure_propagates(tmp_path):
     client = _async_client(lambda r: httpx.Response(500))
     try:
         with pytest.raises(httpx.HTTPStatusError):
-            download_all(_files(), str(tmp_path), client)
+            asyncio.run(download_all_async(_files(), str(tmp_path), client))
     finally:
         asyncio.run(client.aclose())
 
@@ -52,7 +52,7 @@ def test_retries_then_succeeds(tmp_path):
     files = [FileEntry("a.txt", 3, "s1", "https://raw.githubusercontent.com/o/r/main/a.txt")]
     client = _async_client(handler)
     try:
-        written = download_all(files, str(tmp_path), client)
+        written = asyncio.run(download_all_async(files, str(tmp_path), client))
     finally:
         asyncio.run(client.aclose())
     assert calls["n"] == 3
@@ -67,7 +67,7 @@ def test_concurrent_workers_download_all_files(tmp_path):
     ]
     client = _async_client(lambda r: httpx.Response(200, content=b"x"))
     try:
-        written = download_all(files, str(tmp_path), client, workers=2)
+        written = asyncio.run(download_all_async(files, str(tmp_path), client, workers=2))
     finally:
         asyncio.run(client.aclose())
     assert len(written) == 5
