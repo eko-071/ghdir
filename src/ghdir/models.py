@@ -16,14 +16,6 @@ class RepoRef:
     repo: str
     tail: tuple[str, ...] = ()
 
-    @property
-    def branch(self) -> str | None:
-        return self.tail[0] if self.tail else None
-
-    @property
-    def path(self) -> str:
-        return "/".join(self.tail[1:])
-
 
 @dataclass(frozen=True)
 class FileEntry:
