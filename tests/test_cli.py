@@ -11,21 +11,13 @@ runner = CliRunner()
 URL = "https://github.com/octo/hello/tree/main/src"
 
 
-class _FakeClient:
-    def __init__(self, transport):
-        self._real = GitHubClient(transport=transport)
-
-    def __enter__(self):
-        return self._real
-
-    def __exit__(self, *exc):
-        self._real.http.close()
-
-
 @pytest.fixture
 def mock_cli(monkeypatch, tree, tmp_path):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("ghdir.cli.GitHubClient", lambda: _FakeClient(make_transport(tree)))
+    real_client = GitHubClient
+    monkeypatch.setattr(
+        "ghdir.cli.GitHubClient", lambda: real_client(transport=make_transport(tree))
+    )
     real_async_client = httpx.AsyncClient
     transport = make_transport(tree)
     monkeypatch.setattr(
