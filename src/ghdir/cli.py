@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import os
 
 import httpx
 import typer
 from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn
 
-from ghdir import __version__, filesystem
+from ghdir import __version__
 from ghdir.downloader import download_all_async
 from ghdir.errors import GhdirError
 from ghdir.filters import apply_filters, parse_size
@@ -75,7 +76,7 @@ def main(
                 return
 
             dest = output or resolved.default_output_dir
-            filesystem.ensure_output_dir(dest)
+            os.makedirs(dest, exist_ok=True)
             with _progress() as progress:
                 task = progress.add_task(
                     f"Downloading {len(files)} files", total=total_bytes

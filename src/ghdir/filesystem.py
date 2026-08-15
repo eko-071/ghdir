@@ -17,10 +17,6 @@ def sanitize_relative_path(rel_path: str) -> str:
     return "/".join(parts)
 
 
-def ensure_output_dir(dest: str) -> None:
-    os.makedirs(dest, exist_ok=True)
-
-
 def write_file(dest_root: str, rel_path: str, data: bytes) -> str:
     """Write `data` to `dest_root/rel_path`, rejecting paths that escape the root.
 
