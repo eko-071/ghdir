@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import time
 from typing import Self
 from urllib.parse import quote
 
 import httpx
 
+from ghdir.downloader import MAX_RETRIES, RETRY_STATUS
 from ghdir.errors import GhdirError, PrivateRepoError, RepoNotFoundError
 
 BASE = "https://api.github.com"
@@ -39,7 +41,7 @@ class GitHubClient:
         with slash-containing branch names (percent-encoded as one path segment).
         """
         url = f"/repos/{owner}/{repo}/branches/{quote(name, safe='')}"
-        resp = self.http.get(BASE + url)
+        resp = self._get_response(url)
         if resp.status_code == 404:
             return None
         if resp.status_code == 403:
@@ -83,7 +85,7 @@ class GitHubClient:
         return out
 
     def _get(self, url: str, what: str) -> dict:
-        resp = self.http.get(BASE + url)
+        resp = self._get_response(url)
         if resp.status_code == 404:
             raise RepoNotFoundError(f"{what} not found")
         if resp.status_code == 403:
@@ -91,3 +93,22 @@ class GitHubClient:
         if resp.status_code != 200:
             raise GhdirError(f"GitHub API error {resp.status_code} for {what}")
         return resp.json()
+
+    def _get_response(self, url: str) -> httpx.Response:
+        """GET with the same retry/backoff the downloader uses for transient failures.
+
+        Definitive errors (404, 403) are never retried; they're returned and
+        handled by the caller.
+        """
+        for attempt in range(MAX_RETRIES):
+            try:
+                resp = self.http.get(BASE + url)
+                if resp.status_code in RETRY_STATUS and attempt < MAX_RETRIES - 1:
+                    time.sleep(2**attempt)
+                    continue
+                return resp
+            except httpx.TransportError:
+                if attempt == MAX_RETRIES - 1:
+                    raise
+                time.sleep(2**attempt)
+        raise RuntimeError("unreachable")  # loop always returns or raises

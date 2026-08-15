@@ -13,6 +13,34 @@ def test_repo_404_raises_repo_not_found():
         c.repo("nope", "nope")
 
 
+def test_retries_transient_503_then_succeeds():
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            return httpx.Response(503)
+        return httpx.Response(200, json={"full_name": "octo/hello", "default_branch": "main"})
+
+    with GitHubClient(transport=httpx.MockTransport(handler)) as c:
+        assert c.repo("octo", "hello")["default_branch"] == "main"
+    assert calls["n"] == 3
+
+
+def test_retries_do_not_retry_404():
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(404, json={})
+
+    with GitHubClient(transport=httpx.MockTransport(handler)) as c, pytest.raises(
+        RepoNotFoundError
+    ):
+        c.repo("nope", "nope")
+    assert calls["n"] == 1
+
+
 def test_repo_403_raises_private():
     with GitHubClient(transport=httpx.MockTransport(lambda r: httpx.Response(403, json={}))) as c, pytest.raises(
         PrivateRepoError
