@@ -65,6 +65,29 @@ def test_cli_dry_run_exclude(tmp_path, mock_cli):
     assert not (tmp_path / "hello").exists()
 
 
+def test_cli_everything_filtered(tmp_path, mock_cli):
+    result = runner.invoke(
+        app, [URL, "--dry-run", "--exclude", "*.py"]
+    )
+    assert result.exit_code == 0, result.output
+    assert "Filtered out 2 files; 0 remain (0 bytes)" in result.stdout
+    assert "Nothing to download after filtering" in result.stdout
+    assert not (tmp_path / "src").exists()
+
+
+def test_cli_empty_directory(tmp_path, mock_cli, monkeypatch):
+    from ghdir.models import ResolvedRepo
+
+    monkeypatch.setattr(
+        "ghdir.cli.resolve",
+        lambda *a, **kw: ResolvedRepo("octo", "hello", "main", "empty", ()),
+    )
+    result = runner.invoke(app, [URL, "--dry-run"])
+    assert result.exit_code == 0, result.output
+    assert "Nothing to download; directory is empty" in result.stdout
+    assert "after filtering" not in result.stdout
+
+
 def test_cli_branch_override(tmp_path, mock_cli):
     result = runner.invoke(
         app, ["https://github.com/octo/hello/tree/main", "--branch", "dev"]

@@ -66,7 +66,10 @@ def main(
                 typer.echo(f"Filtered out {skipped} files; {len(files)} remain ({total_bytes} bytes)")
 
             if not files:
-                typer.echo("Nothing to download after filtering")
+                if resolved.files:
+                    typer.echo("Nothing to download after filtering")
+                else:
+                    typer.echo("Nothing to download; directory is empty")
                 return
             if dry_run:
                 return
