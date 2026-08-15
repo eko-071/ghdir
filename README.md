@@ -20,6 +20,23 @@ or with pip:
 ```sh
 pip install .
 ```
+ 
+## Updating
+ 
+Since it's installed from a local checkout, pull the latest changes and
+reinstall:
+ 
+```sh
+cd ghdir
+git pull
+uv tool install . --force
+```
+ 
+or with pip:
+ 
+```sh
+pip install . --force-reinstall
+```
 
 Needs Python 3.11+.
 
