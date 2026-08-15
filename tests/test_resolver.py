@@ -1,7 +1,6 @@
 import httpx
 import pytest
 
-from conftest import make_transport
 from ghdir.errors import BranchNotFoundError, PathNotFoundError, RepoNotFoundError
 from ghdir.github import GitHubClient
 from ghdir.models import RepoRef
@@ -57,9 +56,8 @@ def test_missing_repo_raises():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(404, json={"message": "Not Found"})
 
-    with GitHubClient(transport=httpx.MockTransport(handler)) as c:
-        with pytest.raises(RepoNotFoundError):
-            resolve(c, RepoRef("nope", "nope"))
+    with GitHubClient(transport=httpx.MockTransport(handler)) as c, pytest.raises(RepoNotFoundError):
+        resolve(c, RepoRef("nope", "nope"))
 
 
 def test_total_bytes_and_default_output_dir(client):

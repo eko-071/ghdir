@@ -1,21 +1,23 @@
 import httpx
 import pytest
+from conftest import make_transport
 
-from conftest import load_fixture, make_transport
 from ghdir.errors import PrivateRepoError, RepoNotFoundError
 from ghdir.github import GitHubClient
 
 
 def test_repo_404_raises_repo_not_found():
-    with GitHubClient(transport=httpx.MockTransport(lambda r: httpx.Response(404, json={}))) as c:
-        with pytest.raises(RepoNotFoundError):
-            c.repo("nope", "nope")
+    with GitHubClient(transport=httpx.MockTransport(lambda r: httpx.Response(404, json={}))) as c, pytest.raises(
+        RepoNotFoundError
+    ):
+        c.repo("nope", "nope")
 
 
 def test_repo_403_raises_private():
-    with GitHubClient(transport=httpx.MockTransport(lambda r: httpx.Response(403, json={}))) as c:
-        with pytest.raises(PrivateRepoError):
-            c.repo("secret", "repo")
+    with GitHubClient(transport=httpx.MockTransport(lambda r: httpx.Response(403, json={}))) as c, pytest.raises(
+        PrivateRepoError
+    ):
+        c.repo("secret", "repo")
 
 
 def test_branches_parsed(tree):

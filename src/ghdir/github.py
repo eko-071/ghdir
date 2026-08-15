@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Self
+
 import httpx
 
 from ghdir.errors import GhdirError, PrivateRepoError, RepoNotFoundError
@@ -20,7 +22,7 @@ class GitHubClient:
             headers["Authorization"] = f"Bearer {token}"
         self.http = httpx.Client(headers=headers, timeout=30, transport=transport)
 
-    def __enter__(self) -> GitHubClient:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc) -> None:

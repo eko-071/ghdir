@@ -22,6 +22,9 @@
     ],
     "xyz789": [
       {"path": "nested.py", "mode": "100644", "type": "blob", "sha": "sha-nested", "size": 10}
+    ],
+    "def456": [
+      {"path": "dev_note.md", "mode": "100644", "type": "blob", "sha": "sha-dev-note", "size": 30}
     ]
   }
 }
