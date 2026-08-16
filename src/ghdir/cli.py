@@ -10,7 +10,7 @@ import typer
 from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn
 
 from ghdir import __version__
-from ghdir.downloader import download_all_async
+from ghdir.downloader import DownloadResult, download_all_async
 from ghdir.errors import GhdirError
 from ghdir.filters import apply_filters, parse_size
 from ghdir.github import GitHubClient
@@ -47,6 +47,9 @@ def main(
     max_size: str = typer.Option(
         None, "--max-size", help="Skip files larger than this, e.g. '50M', '1.5G'."
     ),
+    force: bool = typer.Option(
+        False, "--force", help="Re-download files even if already up to date."
+    ),
 ) -> None:
     """Download the directory at a GitHub tree URL, e.g. .../tree/main/Embodied."""
     try:
@@ -82,7 +85,7 @@ def main(
                     f"Downloading {len(files)} files", total=total_bytes
                 )
 
-                async def _run() -> list[str]:
+                async def _run() -> DownloadResult:
                     async with httpx.AsyncClient(timeout=30) as download_client:
                         return await download_all_async(
                             files,
@@ -92,10 +95,17 @@ def main(
                             report=lambda done_bytes: progress.update(
                                 task, completed=done_bytes
                             ),
+                            skip_existing=not force,
                         )
 
-                asyncio.run(_run())
-        typer.echo(f"Downloaded {len(files)} files ({total_bytes} bytes) to {dest}")
+                result = asyncio.run(_run())
+        if result.skipped:
+            typer.echo(
+                f"Downloaded {len(result.written)} files, "
+                f"skipped {result.skipped} already up to date, to {dest}"
+            )
+        else:
+            typer.echo(f"Downloaded {len(result.written)} files to {dest}")
     except GhdirError as e:
         typer.secho(f"error: {e}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1)

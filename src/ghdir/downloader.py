@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from dataclasses import dataclass, field
 
 import httpx
 
@@ -14,6 +15,12 @@ Report = Callable[[int], None]
 
 MAX_RETRIES = 3
 RETRY_STATUS = {429, 500, 502, 503, 504}
+
+
+@dataclass
+class DownloadResult:
+    written: list[str] = field(default_factory=list)
+    skipped: int = 0
 
 
 async def _fetch(client: httpx.AsyncClient, url: str) -> bytes:
@@ -38,19 +45,23 @@ async def download_all_async(
     client: httpx.AsyncClient,
     workers: int = 8,
     report: Report | None = None,
-) -> list[str]:
+    skip_existing: bool = True,
+) -> DownloadResult:
     semaphore = asyncio.Semaphore(workers)
-    written: list[str] = []
+    result = DownloadResult()
     done_bytes = 0
 
     async def run(entry: FileEntry) -> None:
         nonlocal done_bytes
-        async with semaphore:
-            data = await _fetch(client, entry.download_url)
-        written.append(filesystem.write_file(dest_root, entry.path, data))
-        done_bytes += len(data)
+        if skip_existing and filesystem.existing_sha(dest_root, entry.path) == entry.sha:
+            result.skipped += 1
+        else:
+            async with semaphore:
+                data = await _fetch(client, entry.download_url)
+            result.written.append(filesystem.write_file(dest_root, entry.path, data))
+        done_bytes += entry.size
         if report:
             report(done_bytes)
 
     await asyncio.gather(*(run(entry) for entry in files))
-    return written
+    return result

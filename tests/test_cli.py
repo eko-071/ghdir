@@ -1,3 +1,5 @@
+import os
+
 import httpx
 import pytest
 from conftest import make_transport
@@ -32,6 +34,33 @@ def test_cli_download_to_output(tmp_path, mock_cli):
     assert (tmp_path / "out" / "main.py").is_file()
     assert (tmp_path / "out" / "utils.py").is_file()
     assert "Downloaded 2 files" in result.stdout
+
+
+def test_cli_second_run_skips_up_to_date(tmp_path, mock_cli, monkeypatch):
+    shas = {e["path"]: e["sha"] for e in mock_cli["trees"]["sha-src"]}
+
+    def fake_existing_sha(dest_root, rel_path):
+        if os.path.isfile(os.path.join(dest_root, rel_path)):
+            return shas[rel_path]
+        return None
+
+    monkeypatch.setattr("ghdir.downloader.filesystem.existing_sha", fake_existing_sha)
+    runner.invoke(app, [URL, "-o", str(tmp_path / "out")])
+    result = runner.invoke(app, [URL, "-o", str(tmp_path / "out")])
+    assert result.exit_code == 0, result.output
+    assert "Downloaded 0 files, skipped 2 already up to date" in result.stdout
+
+
+def test_cli_force_redownloads(tmp_path, mock_cli, monkeypatch):
+    shas = {e["path"]: e["sha"] for e in mock_cli["trees"]["sha-src"]}
+    monkeypatch.setattr(
+        "ghdir.downloader.filesystem.existing_sha",
+        lambda dest_root, rel_path: shas.get(rel_path),
+    )
+    result = runner.invoke(app, [URL, "-o", str(tmp_path / "out"), "--force"])
+    assert result.exit_code == 0, result.output
+    assert "Downloaded 2 files" in result.stdout
+    assert "skipped" not in result.stdout
 
 
 def test_cli_default_output_dir(tmp_path, mock_cli):

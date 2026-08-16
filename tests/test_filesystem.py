@@ -1,7 +1,20 @@
 import pytest
 
 import ghdir.filesystem
-from ghdir.filesystem import sanitize_relative_path, write_file
+from ghdir.filesystem import existing_sha, git_blob_sha, sanitize_relative_path, write_file
+
+
+def test_git_blob_sha_empty_matches_known_value():
+    assert git_blob_sha(b"") == "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+
+
+def test_existing_sha_none_for_missing_file(tmp_path):
+    assert existing_sha(str(tmp_path), "nope.txt") is None
+
+
+def test_existing_sha_for_existing_file(tmp_path):
+    (tmp_path / "a.txt").write_bytes(b"hello")
+    assert existing_sha(str(tmp_path), "a.txt") == git_blob_sha(b"hello")
 
 
 def test_write_nested_creates_dirs(tmp_path):
