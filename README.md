@@ -57,6 +57,7 @@ A few flags if you need them:
 - `--include GLOB` — only download files matching this glob (repeatable)
 - `--exclude GLOB` — skip files matching this glob (repeatable)
 - `--max-size SIZE` — skip files larger than `SIZE` (e.g. `50M`, `1.5G`)
+- `--force` — re-download everything, even files that are already up to date
 - `--version` — print the installed version and exit
 
 Some examples:
@@ -82,7 +83,14 @@ Running it looks like this:
 
 ```
 Found 132 files (1482974 bytes) in main/Embodied
-Downloaded 132 files (1482974 bytes) to Embodied
+Downloaded 132 files to Embodied
+```
+
+Already-up-to-date files are skipped on re-runs — only missing or changed
+files are fetched. To force a fresh copy of everything, use `--force`:
+
+```
+Downloaded 0 files, skipped 132 already up to date, to Embodied
 ```
 
 ## Developing
