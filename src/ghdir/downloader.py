@@ -10,7 +10,7 @@ import httpx
 from ghdir import filesystem
 from ghdir.models import FileEntry
 
-Report = Callable[[int, int], None]
+Report = Callable[[int], None]
 
 MAX_RETRIES = 3
 RETRY_STATUS = {429, 500, 502, 503, 504}
@@ -41,17 +41,16 @@ async def download_all_async(
 ) -> list[str]:
     semaphore = asyncio.Semaphore(workers)
     written: list[str] = []
-    done_files = done_bytes = 0
+    done_bytes = 0
 
     async def run(entry: FileEntry) -> None:
-        nonlocal done_files, done_bytes
+        nonlocal done_bytes
         async with semaphore:
             data = await _fetch(client, entry.download_url)
         written.append(filesystem.write_file(dest_root, entry.path, data))
-        done_files += 1
         done_bytes += len(data)
         if report:
-            report(done_files, done_bytes)
+            report(done_bytes)
 
     await asyncio.gather(*(run(entry) for entry in files))
     return written

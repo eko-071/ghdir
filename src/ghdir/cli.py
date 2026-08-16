@@ -89,7 +89,7 @@ def main(
                             dest,
                             download_client,
                             workers=workers,
-                            report=lambda done_files, done_bytes: progress.update(
+                            report=lambda done_bytes: progress.update(
                                 task, completed=done_bytes
                             ),
                         )
