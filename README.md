@@ -86,12 +86,24 @@ Found 132 files (1482974 bytes) in main/Embodied
 Downloaded 132 files to Embodied
 ```
 
-Already-up-to-date files are skipped on re-runs — only missing or changed
+Already-up-to-date files are skipped on re-runs. Only missing or changed
 files are fetched. To force a fresh copy of everything, use `--force`:
 
 ```
 Downloaded 0 files, skipped 132 already up to date, to Embodied
 ```
+
+## Shell completion
+
+ghdir supports tab completion for bash, zsh, fish, and PowerShell:
+
+```sh
+ghdir --install-completion
+```
+
+This detects your shell and installs completion for flags (`--branch`,
+`--include`, etc.) and local directory paths for `-o/--output`. Restart
+your shell, or source your rc file, for it to take effect.
 
 ## Developing
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from pathlib import Path
 
 import httpx
 import typer
@@ -17,7 +18,7 @@ from ghdir.github import GitHubClient
 from ghdir.parser import parse_github_url
 from ghdir.resolver import resolve
 
-app = typer.Typer(add_completion=False, help="Download a subdirectory of a GitHub repository.")
+app = typer.Typer(help="Download a subdirectory of a GitHub repository.")
 
 
 def _print_version(value: bool) -> None:
@@ -32,8 +33,14 @@ def main(
     version: bool = typer.Option(
         False, "--version", is_eager=True, callback=_print_version, help="Show the version and exit."
     ),
-    output: str = typer.Option(
-        None, "-o", "--output", help="Output directory (default: the target dir's name)."
+    output: Path = typer.Option(
+        None,
+        "-o",
+        "--output",
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        help="Output directory (default: the target dir's name).",
     ),
     branch: str = typer.Option(None, "--branch", help="Override the branch parsed from the URL."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Resolve and report, download nothing."),
@@ -78,7 +85,7 @@ def main(
             if dry_run:
                 return
 
-            dest = output or resolved.default_output_dir
+            dest = str(output) if output else resolved.default_output_dir
             os.makedirs(dest, exist_ok=True)
             with _progress() as progress:
                 task = progress.add_task(

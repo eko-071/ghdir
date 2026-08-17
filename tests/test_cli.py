@@ -139,6 +139,13 @@ def test_cli_version():
     assert "ghdir 0.1.0" in result.stdout
 
 
+def test_cli_completion_not_disabled():
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "--install-completion" in result.stdout
+    assert "--show-completion" in result.stdout
+
+
 def test_cli_invalid_url_error(mock_cli):
     result = runner.invoke(app, ["https://example.com/octo/hello"])
     assert result.exit_code == 1
