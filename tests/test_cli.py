@@ -1,5 +1,6 @@
 import os
 import re
+from importlib.metadata import version as pkg_version
 
 import httpx
 import pytest
@@ -144,7 +145,7 @@ def test_cli_missing_path_error(tmp_path, mock_cli):
 def test_cli_version():
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "ghdir 0.1.0" in result.stdout
+    assert f"ghdir {pkg_version('ghdir')}" in result.stdout
 
 
 def test_cli_completion_not_disabled():
