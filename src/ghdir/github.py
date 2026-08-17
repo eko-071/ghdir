@@ -35,8 +35,11 @@ class GitHubClient:
     def __init__(
         self,
         transport: httpx.BaseTransport | None = None,
+        token: str | None = None,
     ) -> None:
         headers = {"Accept": "application/vnd.github+json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         self.http = httpx.Client(headers=headers, timeout=30, transport=transport)
 
     def __enter__(self) -> Self:
@@ -103,7 +106,9 @@ class GitHubClient:
     def _get(self, url: str, what: str) -> dict:
         resp = self._get_response(url)
         if resp.status_code == 404:
-            raise RepoNotFoundError(f"{what} not found")
+            raise RepoNotFoundError(
+                f"{what} not found (if this is private, run 'ghdir auth login')"
+            )
         if resp.status_code == 403:
             if _rate_limited(resp):
                 raise RateLimitError(_rate_limit_message(resp))

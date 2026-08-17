@@ -107,6 +107,22 @@ files are fetched. To force a fresh copy of everything, use `--force`:
 Downloaded 0 files, skipped 132 already up to date, to Embodied
 ```
 
+## Authentication
+
+By default ghdir hits the GitHub API anonymously (60 requests/hour) and
+cannot download from private repositories. Storing a token unlocks private
+repos and raises the limit to 5000 requests/hour:
+
+```sh
+ghdir auth login     # prompts for a token, or pass --token TOKEN inline
+ghdir auth status    # show who you're logged in as
+ghdir auth logout    # remove the stored token
+```
+
+Tokens are saved to `~/.config/ghdir/token` (mode 0600). For CI or
+scripted use, set the `GHDIR_TOKEN` environment variable instead — it
+takes precedence over the stored file and needs no interactive prompt.
+
 ## Shell completion
 
 ghdir supports tab completion for bash, zsh, fish, and PowerShell:

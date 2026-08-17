@@ -26,7 +26,7 @@ def mock_cli(monkeypatch, tree, tmp_path):
     monkeypatch.chdir(tmp_path)
     real_client = GitHubClient
     monkeypatch.setattr(
-        "ghdir.cli.GitHubClient", lambda: real_client(transport=make_transport(tree))
+        "ghdir.cli.GitHubClient", lambda **kw: real_client(**kw, transport=make_transport(tree))
     )
     real_async_client = httpx.AsyncClient
     transport = make_transport(tree)
@@ -159,3 +159,19 @@ def test_cli_invalid_url_error(mock_cli):
     result = runner.invoke(app, ["https://example.com/octo/hello"])
     assert result.exit_code == 1
     assert "error:" in result.stderr
+
+
+def test_cli_auth_login_saves_token(tmp_path, monkeypatch):
+    monkeypatch.delenv("GHDIR_TOKEN", raising=False)
+    monkeypatch.setattr("ghdir.auth.TOKEN_PATH", tmp_path / "token")
+    result = runner.invoke(app, ["auth", "login", "--token", "abc123"])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "token").read_text() == "abc123"
+
+
+def test_cli_auth_status_no_token(tmp_path, monkeypatch):
+    monkeypatch.delenv("GHDIR_TOKEN", raising=False)
+    monkeypatch.setattr("ghdir.auth.TOKEN_PATH", tmp_path / "token")
+    result = runner.invoke(app, ["auth", "status"])
+    assert result.exit_code == 1
+    assert "Not logged in." in result.stdout

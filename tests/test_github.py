@@ -15,6 +15,18 @@ def test_repo_404_raises_repo_not_found():
         c.repo("nope", "nope")
 
 
+def test_client_sends_bearer_token_header():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["auth"] = request.headers.get("Authorization")
+        return httpx.Response(200, json={"full_name": "octo/hello", "default_branch": "main"})
+
+    with GitHubClient(transport=httpx.MockTransport(handler), token="tok-123") as c:
+        c.repo("octo", "hello")
+    assert seen["auth"] == "Bearer tok-123"
+
+
 def test_retries_transient_503_then_succeeds():
     calls = {"n": 0}
 
