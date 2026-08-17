@@ -1,4 +1,5 @@
 import os
+import re
 
 import httpx
 import pytest
@@ -9,6 +10,13 @@ from ghdir.cli import app
 from ghdir.github import GitHubClient
 
 runner = CliRunner()
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _plain_text(output: str) -> str:
+    """Strip ANSI codes and whitespace so substring checks survive any wrap width."""
+    return _ANSI_RE.sub("", output).replace("\n", "").replace(" ", "")
 
 URL = "https://github.com/octo/hello/tree/main/src"
 
@@ -142,8 +150,9 @@ def test_cli_version():
 def test_cli_completion_not_disabled():
     result = runner.invoke(app, ["--help"], env={"COLUMNS": "200", "LINES": "50"})
     assert result.exit_code == 0
-    assert "--install-completion" in result.stdout
-    assert "--show-completion" in result.stdout
+    plain = _plain_text(result.stdout)
+    assert "--install-completion" in plain
+    assert "--show-completion" in plain
 
 
 def test_cli_invalid_url_error(mock_cli):
