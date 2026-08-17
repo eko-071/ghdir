@@ -3,42 +3,56 @@
 Download a single folder from a GitHub repo, without cloning the whole thing.
 
 Point it at a GitHub tree URL and it grabs just that folder, keeping the
-directory structure intact. You should probably use `git clone` if you're downloading an entire repo, but this tool works for that as well.
+directory structure intact. You should probably use `git clone` if you're
+downloading an entire repo, but this tool works for that as well.
 
 ## Install
 
-Not on PyPI yet, so clone the repo and install from your local checkout:
- 
+```sh
+pip install ghdir
+```
+
+or with [uv](https://docs.astral.sh/uv/):
+
+```sh
+uv tool install ghdir
+```
+
+Needs Python 3.11+.
+
+### From source
+
 ```sh
 git clone https://github.com/eko-071/ghdir.git
 cd ghdir
 uv tool install .
 ```
- 
+
 or with pip:
 
 ```sh
 pip install .
 ```
- 
+
 ## Updating
- 
-Since it's installed from a local checkout, pull the latest changes and
-reinstall:
- 
+
+```sh
+pip install --upgrade ghdir
+```
+
+or:
+
+```sh
+uv tool upgrade ghdir
+```
+
+If you installed from a local checkout instead, pull and reinstall:
+
 ```sh
 cd ghdir
 git pull
 uv tool install . --force
 ```
- 
-or with pip:
- 
-```sh
-pip install . --force-reinstall
-```
-
-Needs Python 3.11+.
 
 ## Usage
 
