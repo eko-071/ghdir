@@ -9,11 +9,24 @@ description = "Download a subdirectory of a GitHub repository"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+authors = [{ name = "Fahad Ali", email = "fahad_ali.07@proton.me" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Version Control :: Git",
+]
 dependencies = [
     "typer>=0.12",
     "httpx>=0.27",
     "rich>=13",
 ]
+
+[project.urls]
+Repository = "https://github.com/eko-071/ghdir"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]

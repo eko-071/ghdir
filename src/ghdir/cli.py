@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import os
+from importlib.metadata import version
 from pathlib import Path
 
 import httpx
 import typer
 from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn
 
-from ghdir import __version__
 from ghdir.downloader import DownloadResult, download_all_async
 from ghdir.errors import GhdirError
 from ghdir.filters import apply_filters, parse_size
@@ -23,7 +23,7 @@ app = typer.Typer(help="Download a subdirectory of a GitHub repository.")
 
 def _print_version(value: bool) -> None:
     if value:
-        typer.echo(f"ghdir {__version__}")
+        typer.echo(f"ghdir {version('ghdir')}")
         raise typer.Exit()
 
 
