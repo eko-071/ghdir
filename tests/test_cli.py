@@ -140,7 +140,7 @@ def test_cli_version():
 
 
 def test_cli_completion_not_disabled():
-    result = runner.invoke(app, ["--help"])
+    result = runner.invoke(app, ["--help"], env={"COLUMNS": "200", "LINES": "50"})
     assert result.exit_code == 0
     assert "--install-completion" in result.stdout
     assert "--show-completion" in result.stdout

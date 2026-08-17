@@ -8,13 +8,12 @@ version = "0.1.0"
 description = "Download a subdirectory of a GitHub repository"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "Fahad Ali", email = "fahad_ali.07@proton.me" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Topic :: Software Development :: Version Control :: Git",
